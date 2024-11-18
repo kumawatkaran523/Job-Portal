@@ -3,6 +3,13 @@ import bcrypt from "bcrypt";
 import { User } from '../models/user.model.js';
 import jwt from 'jsonwebtoken';
 
+import multer from 'multer';
+import cloudinary from 'cloudinary';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+
 const options = {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production', // Secure only in production
@@ -16,7 +23,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
         if (!fullname || !email || !phoneNumber || !password || !role) {
             return res.status(400).json({
-                message: "Something is missing",
+                fileUrimessage: "Something is missing",
                 success: false
             });
         }
@@ -147,45 +154,153 @@ const getProfile=asyncHandler(async (req,res)=>{
     });
 });
 
+// const updateUserProfile = asyncHandler(async (req, res) => {
+//     const { fullname, email, phoneNumber, bio, skills } = req.body;
+//     if (!fullname || !email || !phoneNumber || !bio || !skills) {
+//         return res.status(400).json({
+//             message: "All compulsory field are required",
+//             success: false
+//         });
+//     }
+//     let skillsArray;
+//     if (skills) {
+//         skillsArray = skills.split(",");
+//     }
+//     const data = await User.findOneAndUpdate(
+//         req.user._id,
+//         {
+//             $set: {
+//                 fullname,
+//                 email,
+//                 phoneNumber,
+//                 bio,
+//                 skillsArray
+//             }
+//         },
+//         {
+//             new:true
+//         }
+//     )
+//     if(!data){
+//         return res.status(200).json({
+//             message:"Error while updating",
+//             success:true
+//         })    
+//     }
+//     return res.status(200).json({
+//         message:"Profile updated successfully.",
+//         data,
+//         success:true
+//     });
+// })
+
+
+const upload = multer({ dest: 'uploads/' });
+// Cloudinary config
+cloudinary.config({
+    cloud_name: process.env.CLOUD_NAME,
+    api_key: process.env.API_KEY,
+    api_secret: process.env.API_SECRET
+});
+
+
+// Profile update handler
 const updateUserProfile = asyncHandler(async (req, res) => {
     const { fullname, email, phoneNumber, bio, skills } = req.body;
+
+    console.log(fullname)
+    // Check for required fields
     if (!fullname || !email || !phoneNumber || !bio || !skills) {
         return res.status(400).json({
-            message: "All compulsory field are required",
+            message: "All compulsory fields are required",
             success: false
         });
     }
-    let skillsArray;
-    if (skills) {
-        skillsArray = skills.split(",");
-    }
-    const data = await User.findOneAndUpdate(
-        req.user._id,
-        {
-            $set: {
-                fullname,
-                email,
-                phoneNumber,
-                bio,
-                skillsArray
-            }
-        },
-        {
-            new:true
+
+    // Convert skills to an array
+    let skillsArray = skills.split(",");
+    let profilePictureUrl = "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg"; // Default image URL
+    let resumeUrl = "";
+
+    // Handle profile photo upload if provided
+    if (req.files?.profilePhoto) {
+        const profileFile = req.files.profilePhoto[0];
+        const allowedMimeTypes = ["image/jpeg", "image/png", "image/jpg"];
+        if (!allowedMimeTypes.includes(profileFile.mimetype)) {
+            return res.status(400).json({
+                message: "Invalid file type for profile picture. Only JPEG and PNG are allowed.",
+                success: false
+            });
         }
-    )
-    if(!data){
-        return res.status(200).json({
-            message:"Error while updating",
-            success:true
-        })    
+
+        // Upload to Cloudinary
+        try {
+            const cloudResponse = await cloudinary.uploader.upload(profileFile.path, {
+                resource_type: 'image',
+            });
+            profilePictureUrl = cloudResponse.secure_url;
+        } catch (error) {
+            return res.status(500).json({ message: 'Error uploading profile image to Cloudinary', success: false });
+        }
     }
-    return res.status(200).json({
-        message:"Profile updated successfully.",
-        data,
-        success:true
-    });
-})
+
+    // Handle resume upload if provided
+    if (req.files?.resume) {
+        const resumeFile = req.files.resume[0];
+        if (resumeFile.mimetype !== "application/pdf") {
+            return res.status(400).json({
+                message: "Invalid file type for resume. Only PDF is allowed.",
+                success: false
+            });
+        }
+
+        // Upload to Cloudinary
+        try {
+            const resumeCloudResponse = await cloudinary.uploader.upload(resumeFile.path, {
+                resource_type: 'auto',
+            });
+            resumeUrl = resumeCloudResponse.secure_url;
+        } catch (error) {
+            return res.status(500).json({ message: 'Error uploading resume to Cloudinary', success: false });
+        }
+    }
+
+    // Update the user profile in the database
+    try {
+        const updatedUser = await User.findByIdAndUpdate(
+            req.user._id,
+            {
+                $set: {
+                    fullname,
+                    email,
+                    phoneNumber,
+                    profile: {
+                        bio,
+                        skills: skillsArray,
+                        profilePhoto: profilePictureUrl,
+                        resume: resumeUrl,
+                    },
+                },
+            },
+            { new: true }
+        );
+
+        if (!updatedUser) {
+            return res.status(500).json({
+                message: "Error while updating user profile.",
+                success: false,
+            });
+        }
+
+        return res.status(200).json({
+            message: "Profile updated successfully.",
+            data: updatedUser,
+            success: true,
+        });
+    } catch (error) {
+        return res.status(500).json({ message: "Error updating profile", success: false });
+    }
+});
 
 export {
     registerUser,

@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Navbar from '../components/Navbar';
 
 function Landing() {
+    const [isLoggedin,setIsLoggedin]=useState(false);
+
     return (
-        <div className='px-52 font-monosans'>
+        <div className='font-monosans zoomIn animated'>
             <Navbar />
             <div className='flex flex-col justify-center items-center mt-60'>
                 <p className=' font-monosans font-extrabold text-8xl'><span className='text-red-500'>job</span>folio <span className='text-red-500'>:</span>
