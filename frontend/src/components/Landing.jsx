@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { CarouselPlugin } from './Carousel_component';
-
+import '../style.css';
 function Landing() {
     return (
         <div className='font-monosans zoomIn animated'>
