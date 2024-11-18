@@ -1,199 +1,156 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog'
+import { Label } from './ui/label'
+import { Input } from './ui/input'
+import { Button } from './ui/button'
+import { Loader2 } from 'lucide-react'
 import { useDispatch, useSelector } from 'react-redux'
 import axios from 'axios'
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
-import { useForm } from "react-hook-form"
-import { Link, useNavigate } from 'react-router-dom'
-import { setLoading, setUser } from '/redux/authSlice';
+import { USER_API_END_POINT } from '@/utils/constant'
+import { setUser } from '@/redux/authSlice'
 import { toast } from 'sonner'
-import { Avatar, AvatarImage } from '@/components/ui/avatar'
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from "@/components/ui/dialog"
-import EditIcon from '@mui/icons-material/Edit';
 
 const UpdateProfileDialog = ({ open, setOpen }) => {
+    const [loading, setLoading] = useState(false);
     const { user } = useSelector(store => store.auth);
+
+    const [input, setInput] = useState({
+        fullname: user?.fullname || "",
+        email: user?.email || "",
+        phoneNumber: user?.phoneNumber || "",
+        bio: user?.profile?.bio || "",
+        skills: user?.profile?.skills?.map(skill => skill) || "",
+        file: user?.profile?.resume || ""
+    });
     const dispatch = useDispatch();
-    const [profileImage, setProfileImage] = useState(user?.profileImage || null);
 
-    const { register, handleSubmit, formState: { errors }, setValue } = useForm();
+    const changeEventHandler = (e) => {
+        setInput({ ...input, [e.target.name]: e.target.value });
+    }
 
-    useEffect(() => {
-        if (user) {
-            setValue('fullname', user.fullname);
-            setValue('email', user.email);
-            setValue('phoneNumber', user.phoneNumber);
-            setValue('bio', user.bio);
-            setValue('skills', user.skills);
+    const fileChangeHandler = (e) => {
+        const file = e.target.files?.[0];
+        setInput({ ...input, file })
+    }
+
+    const submitHandler = async (e) => {
+        e.preventDefault();
+        const formData = new FormData();
+        formData.append("fullname", input.fullname);
+        formData.append("email", input.email);
+        formData.append("phoneNumber", input.phoneNumber);
+        formData.append("bio", input.bio);
+        formData.append("skills", input.skills);
+        if (input.file) {
+            formData.append("file", input.file);
         }
-    }, [user, setValue]);
-
-    const handleFileChange = (e) => {
-        const file = e.target.files[0];
-        // console.log(file);
-        if (file) {
-            setProfileImage(URL.createObjectURL(file));
-        }
-    };
-
-    const Submit = async (data) => {
         try {
-            console.log("Form Data:", data);
-    
-            const formData = new FormData();
-            formData.append('fullname', data.fullname);
-            formData.append('email', data.email);
-            formData.append('phoneNumber', data.phoneNumber);
-            formData.append('bio', data.bio);
-            formData.append('skills', data.skills);
-    
-            // Append profile photo and resume if available
-            if (data.profilePhoto && data.profilePhoto[0]) {
-                formData.append('profilePhoto', data.profilePhoto[0]);
-            }
-    
-            if (data.resume && data.resume[0]) {
-                formData.append('resume', data.resume[0]);
-            }
-    
-            dispatch(setLoading(true));
-    
-            const response = await axios.put('http://localhost:8000/app/v1/user/profile/update', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' },
+            setLoading(true);
+            const res = await axios.post(`${USER_API_END_POINT}/profile/update`, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                },
+                withCredentials: true
             });
-    
-            if (response.status === 200) {
-                toast.success("Profile updated successfully");
-                dispatch(setUser(response.data)); 
-                setOpen(false);
-            } else {
-                throw new Error('Unexpected response status');
+            if (res.data.success) {
+                dispatch(setUser(res.data.user));
+                toast.success(res.data.message);
             }
         } catch (error) {
-            console.error("Error:", error);
-            toast.error("Error updating profile");
-        } finally {
-            dispatch(setLoading(false));
+            console.log(error);
+            toast.error(error.response.data.message);
+        } finally{
+            setLoading(false);
         }
-    };
-    
+        setOpen(false);
+        console.log(input);
+    }
+
+
 
     return (
-        <>
-            <Dialog open={open} onOpenChange={() => setOpen(false)}>
-                <DialogContent className="lg:max-w-[800px] font-monosans">
+        <div>
+            <Dialog open={open}>
+                <DialogContent className="sm:max-w-[425px]" onInteractOutside={() => setOpen(false)}>
                     <DialogHeader>
-                        <DialogTitle className='text-2xl'>Edit profile</DialogTitle>
-                        <DialogDescription>
-                            Make changes to your profile here. Click save when you're done.
-                        </DialogDescription>
+                        <DialogTitle>Update Profile</DialogTitle>
                     </DialogHeader>
-                    <form onSubmit={handleSubmit(Submit)}>
-                        <div className='flex flex-col space-y-2 items-start'>
-
-                            <Avatar className="h-40 w-40 rounded-full border-[1px]">
-                                <AvatarImage src={profileImage || "https://www.shutterstock.com/image-vector/circle-line-simple-design-logo-600nw-2174926871.jpg"} alt="profile" />
-                            </Avatar>
-
-                            <label className="flex items-center space-x-1 text-sm cursor-pointer border-[1px] px-5 border-black rounded-md py-1">
+                    <form onSubmit={submitHandler}>
+                        <div className='grid gap-4 py-4'>
+                            <div className='grid grid-cols-4 items-center gap-4'>
+                                <Label htmlFor="name" className="text-right">Name</Label>
                                 <Input
-                                    id="profilePhoto"
-                                    type="file"
-                                    className='hidden'
-                                    accept="image/*"
-                                    {...register("profilePhoto")}
-                                    onChange={handleFileChange}
-                                />
-                                <EditIcon className="text-gray-500" />
-                                <span>Edit Profile Pic</span>
-                            </label>
-                        </div>
-                        <div className="grid gap-4 py-4 w-full">
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="fullname" className="text-right">
-                                    FullName<span className='text-red-500'> *</span>
-                                </Label>
-                                <Input
-                                    id="fullname"
+                                    id="name"
+                                    name="name"
+                                    type="text"
+                                    value={input.fullname}
+                                    onChange={changeEventHandler}
                                     className="col-span-3"
-                                    value={user?.fullname}
-                                    {...register("fullname", { required: "FullName is required" })}
-                                />
-                            </div>
-                            {errors.fullname && <span className='text-red-500 text-xs m-2'>{errors.fullname.message}</span>}
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="email" className="text-right">
-                                    Email Address<span className='text-red-500'> *</span>
-                                </Label>
-                                <Input
-                                    id="email"
-                                    className="col-span-3"
-                                    value={user?.email}
-                                    {...register("email", { required: "Email Address is required" })}
-                                />
-                            </div>
-                            {errors.email && <span className='text-red-500 text-xs m-2'>{errors.email.message}</span>}
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="phoneNumber" className="text-right">
-                                    Phone Number<span className='text-red-500'> *</span>
-                                </Label>
-                                <Input
-                                    id="phoneNumber"
-                                    className="col-span-3"
-                                    value={user?.phoneNumber}
-                                    {...register("phoneNumber", { required: "Phone number is required" })}
-                                />
-                            </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="bio" className="text-right">
-                                    Bio<span className='text-red-500'> *</span>
-                                </Label>
-                                <Textarea placeholder="Tell us something about yourself..." className="col-span-3 w-full"
-                                    {...register("bio", { required: "Bio is required" })}
-                                    value={user?.bio}
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="skills" className="text-right">
-                                    Skills<span className='text-red-500'> *</span>
-                                </Label>
-                                <Input
-                                    id="skills"
-                                    className="col-span-3"
-                                    {...register("skills", { required: "Please add your skills" })}
                                 />
                             </div>
                             <div className='grid grid-cols-4 items-center gap-4'>
-                                <Label htmlFor="resume" className="text-right">Resume<span className='text-red-500'> *</span></Label>
+                                <Label htmlFor="email" className="text-right">Email</Label>
                                 <Input
-                                    id="resume"
-                                    name="resume"
+                                    id="email"
+                                    name="email"
+                                    type="email"
+                                    value={input.email}
+                                    onChange={changeEventHandler}
+                                    className="col-span-3"
+                                />
+                            </div>
+                            <div className='grid grid-cols-4 items-center gap-4'>
+                                <Label htmlFor="number" className="text-right">Number</Label>
+                                <Input
+                                    id="number"
+                                    name="number"
+                                    value={input.phoneNumber}
+                                    onChange={changeEventHandler}
+                                    className="col-span-3"
+                                />
+                            </div>
+                            <div className='grid grid-cols-4 items-center gap-4'>
+                                <Label htmlFor="bio" className="text-right">Bio</Label>
+                                <Input
+                                    id="bio"
+                                    name="bio"
+                                    value={input.bio}
+                                    onChange={changeEventHandler}
+                                    className="col-span-3"
+                                />
+                            </div>
+                            <div className='grid grid-cols-4 items-center gap-4'>
+                                <Label htmlFor="skills" className="text-right">Skills</Label>
+                                <Input
+                                    id="skills"
+                                    name="skills"
+                                    value={input.skills}
+                                    onChange={changeEventHandler}
+                                    className="col-span-3"
+                                />
+                            </div>
+                            <div className='grid grid-cols-4 items-center gap-4'>
+                                <Label htmlFor="file" className="text-right">Resume</Label>
+                                <Input
+                                    id="file"
+                                    name="file"
                                     type="file"
                                     accept="application/pdf"
+                                    onChange={fileChangeHandler}
                                     className="col-span-3"
-                                    {...register("resume", { required: "Add your resume" })}
                                 />
                             </div>
                         </div>
                         <DialogFooter>
-                            <Button type="submit">Save changes</Button>
+                            {
+                                loading ? <Button className="w-full my-4"> <Loader2 className='mr-2 h-4 w-4 animate-spin' /> Please wait </Button> : <Button type="submit" className="w-full my-4">Update</Button>
+                            }
                         </DialogFooter>
                     </form>
                 </DialogContent>
-            </Dialog >
-        </>
-    );
+            </Dialog>
+        </div>
+    )
 }
 
-export default UpdateProfileDialog;
+export default UpdateProfileDialog
