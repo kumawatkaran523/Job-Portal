@@ -14,7 +14,7 @@ import AdminJobs from "./components/admin/AdminJobs";
 import PostJob from './components/admin/PostJob'
 import Applicants from './components/admin/Applicants'
 import ProtectedRoute from './components/admin/ProtectedRoute'
-
+import './App.css'
 
 const appRouter = createBrowserRouter([
   {
@@ -75,7 +75,7 @@ const appRouter = createBrowserRouter([
 function App() {
 
   return (
-    <div>
+    <div className='grid-background px-52 font-monosans'>
       <RouterProvider router={appRouter} />
     </div>
   )

@@ -9,7 +9,7 @@ import axios from 'axios'
 import { USER_API_END_POINT } from '@/utils/constant'
 import { setUser } from '@/redux/authSlice'
 import { toast } from 'sonner'
-
+import logo from '/logo.svg';
 const Navbar = () => {
     const { user } = useSelector(store => store.auth);
     const dispatch = useDispatch();
@@ -29,13 +29,14 @@ const Navbar = () => {
         }
     }
     return (
-        <div className='bg-white'>
-            <div className='flex items-center justify-between mx-auto max-w-7xl h-16'>
-                <div>
-                    <h1 className='text-2xl font-bold'>Job<span className='text-[#F83002]'>Portal</span></h1>
-                </div>
-                <div className='flex items-center gap-12'>
-                    <ul className='flex font-medium items-center gap-5'>
+        // bg-white/70 backdrop-blur-md
+        <div className='sticky top-6 z-50 mb-10'>
+            <div className='flex items-center justify-between mx-auto max-w-7xl h-16 my-6'>
+                <Link to="/" className="cursor-pointer">
+                    <img src={logo} alt="Logo" width={200} />
+                </Link>
+                <div className='flex items-center gap-12 '>
+                    <ul className='flex font-medium items-center gap-5 '>
                         {
                             user && user.role === 'recruiter' ? (
                                 <>
@@ -46,7 +47,7 @@ const Navbar = () => {
                                 <>
                                     <li><Link to="/">Home</Link></li>
                                     <li><Link to="/jobs">Jobs</Link></li>
-                                    <li><Link to="/browse">Browse</Link></li>
+                                    {/* <li><Link to="/browse">Browse</Link></li> */}
                                 </>
                             )
                         }

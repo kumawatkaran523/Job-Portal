@@ -16,23 +16,28 @@ const HeroSection = () => {
     }
 
     return (
-        <div className='text-center'>
-            <div className='flex flex-col gap-5 my-10'>
-                <span className=' mx-auto px-4 py-2 rounded-full bg-gray-100 text-[#F83002] font-medium'>No. 1 Job Hunt Website</span>
-                <h1 className='text-5xl font-bold'>Search, Apply & <br /> Get Your <span className='text-[#6A38C2]'>Dream Jobs</span></h1>
-                <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Aliquid aspernatur temporibus nihil tempora dolor!</p>
-                <div className='flex w-[40%] shadow-lg border border-gray-200 pl-3 rounded-full items-center gap-4 mx-auto'>
+        <div className='text-center mt-10'>
+            <div className='flex flex-col gap-5 '>
+                <div>
+                    <p className='text-center text-5xl mt-10 font-extrabold'>Search, Apply & <br />Get your <span className='text-red-600'>Dream job.</span></p>
+                    <p className="text-center text-lg mt-4 text-gray-600">
+                        Explore thousands of opportunities tailored just for you. <br />
+                        Your next career move is just a click away!
+                    </p>
+                </div>
+                <div className="flex w-[60%] mt-5 shadow-lg border border-gray-200 rounded-full items-center gap-0 mx-auto overflow-hidden">
                     <input
                         type="text"
-                        placeholder='Find your dream jobs'
+                        placeholder="Find your dream jobs"
                         onChange={(e) => setQuery(e.target.value)}
-                        className='outline-none border-none w-full'
-
+                        className="outline-none border-none w-full bg-white h-14 px-4"
                     />
-                    <Button onClick={searchJobHandler} className="rounded-r-full bg-[#6A38C2]">
-                        <Search className='h-5 w-5' />
+                    <Button onClick={searchJobHandler} className="h-14 bg-red-600 w-32 text-white flex items-center justify-center">
+                        <Search className="h-8 w-8" />
                     </Button>
                 </div>
+
+
             </div>
         </div>
     )
