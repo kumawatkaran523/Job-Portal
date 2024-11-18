@@ -56,8 +56,10 @@ const Login = () => {
     return (
         <div>
             <Navbar />
-            <div className='flex items-center justify-center max-w-7xl mx-auto'>
-                <form onSubmit={submitHandler} className='w-1/2 border border-gray-200 rounded-md p-4 my-10'>
+            <div className=' grid grid-cols-2'>
+
+            <div className='flex items-center justify-center max-full'>
+                <form onSubmit={submitHandler} className='w-1/2 border border-gray-200 rounded-md p-4 my-10 bg-white'>
                     <h1 className='font-bold text-xl mb-5'>Login</h1>
                     <div className='my-2'>
                         <Label>Email</Label>
@@ -66,7 +68,7 @@ const Login = () => {
                             value={input.email}
                             name="email"
                             onChange={changeEventHandler}
-                            placeholder="patel@gmail.com"
+                            placeholder="coder@gmail.com"
                         />
                     </div>
 
@@ -77,7 +79,7 @@ const Login = () => {
                             value={input.password}
                             name="password"
                             onChange={changeEventHandler}
-                            placeholder="patel@gmail.com"
+                            placeholder="strong password"
                         />
                     </div>
                     <div className='flex items-center justify-between'>
@@ -90,7 +92,7 @@ const Login = () => {
                                     checked={input.role === 'student'}
                                     onChange={changeEventHandler}
                                     className="cursor-pointer"
-                                />
+                                    />
                                 <Label htmlFor="r1">Student</Label>
                             </div>
                             <div className="flex items-center space-x-2">
@@ -112,6 +114,16 @@ const Login = () => {
                     <span className='text-sm'>Don't have an account? <Link to="/signup" className='text-blue-600'>Signup</Link></span>
                 </form>
             </div>
+            <div className='flex flex-col w-screen'>
+                <img src='/loginbg.webp' alt="Background" className='w-full sm:w-3/4 lg:w-1/2' />
+                <p className='text-4xl mx-40'>
+                    <span className='font-bold'>Find the job <br />made for <br />you.<br /></span>
+                    <span className='text-lg'>
+                        Browse over 130K jobs at top companies and fast-growing startups.
+                    </span>
+                </p>
+            </div>
+                        </div>
         </div>
     )
 }
